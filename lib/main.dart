@@ -5,7 +5,11 @@ import 'package:todoflutterfirebase/models/task.dart';
 import 'firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
@@ -41,11 +45,6 @@ class _MyHomePageState extends State<MyHomePage> {
   late List<Task> _taskList = <Task>[];
 
   var db = FirebaseFirestore.instance;
-  _connectFirebase() async {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  }
 
   _saveFirestoreData() async {
     final task = <String, dynamic>{
@@ -62,7 +61,8 @@ class _MyHomePageState extends State<MyHomePage> {
         .doc(id.toString())
         .set(task)
         .whenComplete(() => {
-              print("succesfull"),
+              _taskNameController.text = "",
+              _taskDesController.text = "",
             });
   }
 
@@ -73,7 +73,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    _connectFirebase();
     print(_taskList.length);
     return Scaffold(
       appBar: AppBar(
@@ -141,16 +140,34 @@ class _MyHomePageState extends State<MyHomePage> {
               stream:
                   FirebaseFirestore.instance.collection('tasks').snapshots(),
               builder: (context, AsyncSnapshot<QuerySnapshot> streamSnapshot) {
-                return ListView.builder(
-                    itemCount: streamSnapshot.data!.docs.length,
-                    itemBuilder: (ctx, index) {
-                      return Card(
-                          child: ListTile(
-                        title: Text(streamSnapshot.data!.docs[index]['task']),
-                        subtitle:
-                            Text(streamSnapshot.data!.docs[index]['date']),
-                      ));
-                    });
+                if (streamSnapshot.hasData) {
+                  return ListView.builder(
+                      itemCount: streamSnapshot.data!.docs.length,
+                      itemBuilder: (ctx, index) {
+                        String day = DateTime.parse(
+                                streamSnapshot.data!.docs[index]['date'])
+                            .day
+                            .toString();
+                        String month = DateTime.parse(
+                                streamSnapshot.data!.docs[index]['date'])
+                            .month
+                            .toString();
+                        String year = DateTime.parse(
+                                streamSnapshot.data!.docs[index]['date'])
+                            .year
+                            .toString();
+                        return Card(
+                            child: ListTile(
+                          title: Text(streamSnapshot.data!.docs[index]['task']),
+                          subtitle:
+                              Text("$year.$month.$day"),
+                        ));
+                      });
+                } else {
+                  return const Center(
+                    child: Text("Create Yor First tODO Here"),
+                  );
+                }
               },
             ),
           )
