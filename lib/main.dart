@@ -56,7 +56,7 @@ class _MyHomePageState extends State<MyHomePage> {
     Random random = new Random();
     int id = random.nextInt(1000);
 
-    var result = await db
+    await db
         .collection("tasks")
         .doc(id.toString())
         .set(task)
@@ -159,8 +159,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         return Card(
                             child: ListTile(
                           title: Text(streamSnapshot.data!.docs[index]['task']),
-                          subtitle:
-                              Text("$year.$month.$day"),
+                          subtitle: Text("$year.$month.$day"),
                         ));
                       });
                 } else {
