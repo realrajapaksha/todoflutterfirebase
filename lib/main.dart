@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:todoflutterfirebase/models/task.dart';
+import 'package:todoflutterfirebase/screens/login.dart';
 import 'firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -84,6 +85,14 @@ class _MyHomePageState extends State<MyHomePage> {
     print(_taskList.length);
     return Scaffold(
       appBar: AppBar(
+        actions: [
+          IconButton(
+              onPressed: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => const SignInDemo()));
+              },
+              icon: const Icon(Icons.login))
+        ],
         title: const Text("Flutter Firebase"),
       ),
       body: Padding(
@@ -185,14 +194,16 @@ class _MyHomePageState extends State<MyHomePage> {
                               const SizedBox(
                                 height: 5,
                               ),
-                              Text(streamSnapshot.data!.docs[index]['descrtiption'])
+                              Text(streamSnapshot.data!.docs[index]
+                                  ['descrtiption'])
                             ],
                           ),
                           trailing: IconButton(
-                            alignment:  Alignment.topCenter,
+                              alignment: Alignment.topCenter,
                               onPressed: () {
-                                _deleteFirestoreData(
-                                    streamSnapshot.data!.docs[index]["id"].toString());
+                                _deleteFirestoreData(streamSnapshot
+                                    .data!.docs[index]["id"]
+                                    .toString());
                               },
                               icon:
                                   const Icon(Icons.delete, color: Colors.red)),
