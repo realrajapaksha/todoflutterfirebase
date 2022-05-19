@@ -29,7 +29,7 @@ Simple Flutter todo App with Cloud Firebase Firestore Database
 - android -> edit gradle.properties -> paste existing value of org.gradle.jvmargs
 
 
-[stackoverflow Answer for signinReport](https://stackoverflow.com/a/60804020)
+[stackoverflow Answer for signinReport](https://stackoverflow.com/a/60804020)  
 [Multidex Support](https://developer.android.com/studio/build/multidex)
 
 ## References
