@@ -47,14 +47,15 @@ class _MyHomePageState extends State<MyHomePage> {
   var db = FirebaseFirestore.instance;
 
   _saveFirestoreData() async {
+    Random random = new Random();
+    int id = random.nextInt(1000);
+
     final task = <String, dynamic>{
+      "id": id,
       "task": _taskNameController.text,
       "descrtiption": _taskDesController.text,
       "date": DateTime.now().toString(),
     };
-
-    Random random = new Random();
-    int id = random.nextInt(1000);
 
     await db
         .collection("tasks")
@@ -64,6 +65,13 @@ class _MyHomePageState extends State<MyHomePage> {
               _taskNameController.text = "",
               _taskDesController.text = "",
             });
+  }
+
+  _deleteFirestoreData(String id) async {
+    db.collection("tasks").doc(id).delete().then(
+          (doc) => print("Document deleted"),
+          onError: (e) => print("Error updating document $e"),
+        );
   }
 
   @override
@@ -158,8 +166,36 @@ class _MyHomePageState extends State<MyHomePage> {
                             .toString();
                         return Card(
                             child: ListTile(
-                          title: Text(streamSnapshot.data!.docs[index]['task']),
-                          subtitle: Text("$year.$month.$day"),
+                          title: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(
+                                height: 10,
+                              ),
+                              Text(streamSnapshot.data!.docs[index]['task']),
+                            ],
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(
+                                height: 10,
+                              ),
+                              Text("$year.$month.$day"),
+                              const SizedBox(
+                                height: 5,
+                              ),
+                              Text(streamSnapshot.data!.docs[index]['descrtiption'])
+                            ],
+                          ),
+                          trailing: IconButton(
+                            alignment:  Alignment.topCenter,
+                              onPressed: () {
+                                _deleteFirestoreData(
+                                    streamSnapshot.data!.docs[index]["id"].toString());
+                              },
+                              icon:
+                                  const Icon(Icons.delete, color: Colors.red)),
                         ));
                       });
                 } else {
