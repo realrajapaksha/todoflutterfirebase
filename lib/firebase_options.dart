@@ -17,19 +17,13 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for macos - '
@@ -52,11 +46,32 @@ class DefaultFirebaseOptions {
     }
   }
 
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyDcOoJoo0VdnUeUiaQhirALDS20GTCUu2o',
+    appId: '1:533821507557:web:d90370b5e41a8182d9d10c',
+    messagingSenderId: '533821507557',
+    projectId: 'todoapp-fl-codeflow',
+    authDomain: 'todoapp-fl-codeflow.firebaseapp.com',
+    storageBucket: 'todoapp-fl-codeflow.appspot.com',
+    measurementId: 'G-CYBZEPY93G',
+  );
+
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyCglCvjtlt9zLddCWB8Y4V78ZgBU0_0AnE',
     appId: '1:533821507557:android:78de7987239e02e4d9d10c',
     messagingSenderId: '533821507557',
     projectId: 'todoapp-fl-codeflow',
     storageBucket: 'todoapp-fl-codeflow.appspot.com',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyC8Havnby1gpjWSMZ5sVQZiFoG5P16jUhY',
+    appId: '1:533821507557:ios:7490c88226790f59d9d10c',
+    messagingSenderId: '533821507557',
+    projectId: 'todoapp-fl-codeflow',
+    storageBucket: 'todoapp-fl-codeflow.appspot.com',
+    androidClientId: '533821507557-1d7ecrnmq55gfnbf3o18vk6jss958f8d.apps.googleusercontent.com',
+    iosClientId: '533821507557-sllfr900thsni14jop7bi3gtm6k9ipjc.apps.googleusercontent.com',
+    iosBundleId: 'com.example.todoflutterfirebase',
   );
 }
