@@ -18,10 +18,7 @@ Simple Flutter todo App with Cloud Firebase Firestore Database
 - dart pub global activate flutterfire_cli
 - Set flutterfire_cli path
 - flutterfire configure
-- flutter pub add firebase_core
-
-[Add Firebase to your Flutter app documentation](https://firebase.google.com/docs/flutter/setup?platform=android)  
-[Dart Flutter Programming](https://firebase.google.com/docs/firestore/quickstart#dart_4)
+- flutter pub add firebase_core  
 
 ## Setup Google Signin
 - flutter pub add google_sign_in: ^5.3.1.
@@ -39,4 +36,11 @@ Simple Flutter todo App with Cloud Firebase Firestore Database
 ## References
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials, and Flutter with Firebase development, view the
-[firebase firestore documentation](https://firebase.google.com/docs/firestore/quickstart#dart)
+
+[Add Firebase to your Flutter app documentation](https://firebase.google.com/docs/flutter/setup?platform=android)  
+
+[Firebase Firestore Documentation](https://firebase.google.com/docs/firestore/quickstart#dart)  
+
+[Dart Flutter with Firestore](https://firebase.google.com/docs/firestore/quickstart#dart_4)  
+
+[Firebase Auth](https://firebase.flutter.dev/docs/auth/usage)  
