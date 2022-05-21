@@ -11,12 +11,13 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  
   Future<void> _delaySplash() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String username = (prefs.getString("username") ?? "none");
+
+    bool res = prefs.getBool("username") ?? false;
+
     Future.delayed(const Duration(seconds: 2), () {
-      if (username != "none") {
+      if (res) {
         print("home");
         Navigator.pushAndRemoveUntil(
             context,

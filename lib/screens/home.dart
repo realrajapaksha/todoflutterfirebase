@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,16 +22,19 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   var _taskNameController = TextEditingController();
   var _taskDesController = TextEditingController();
+  var _name_focus = FocusNode();
 
   bool _validateTaskDes = false;
   bool _validateTaskName = false;
 
   var db = FirebaseFirestore.instance;
-  GoogleSignInAccount? _currentUser;
-  late GoogleSignInAccount user;
 
-  _saveFirestoreData() async {
-    if (user != null) {
+  String userId = "";
+
+  bool _isLogin = false;
+
+  Future<void> _saveFirestoreData() async {
+    if (userId != "") {
       Random random = new Random();
       int id = random.nextInt(1000);
 
@@ -43,7 +47,7 @@ class _HomeState extends State<Home> {
 
       await db
           .collection("tasks")
-          .doc(user.id)
+          .doc(userId)
           .collection("task list")
           .doc(id.toString())
           .set(task)
@@ -54,10 +58,10 @@ class _HomeState extends State<Home> {
     }
   }
 
-  _deleteFirestoreData(String id) async {
+  Future<void> _deleteFirestoreData(String id) async {
     db
         .collection("tasks")
-        .doc(user.id)
+        .doc(userId)
         .collection("task list")
         .doc(id)
         .delete()
@@ -70,93 +74,125 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     super.initState();
-    _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
-      setState(() {
-        _currentUser = account;
-        user = _currentUser!;
+    if (mounted) {
+      //Check Google user
+      _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
+        setState(() {
+          userId = account!.id;
+          _isLogin = true;
+        });
       });
-      if (_currentUser != null) {}
-    });
-    _googleSignIn.signInSilently();
+
+      //Check Email user
+      FirebaseAuth.instance.authStateChanges().listen((User? user) {
+        if (user != null) {
+          setState(() {
+            _isLogin = true;
+            userId = user.uid;
+          });
+          print(user.uid);
+        }
+      });
+      _googleSignIn.signInSilently();
+    }
   }
 
-  _navigateSplash() {
+  void _navigateSplash() {
+    Navigator.of(context, rootNavigator: true).pop();
     Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => const SplashScreen()),
         ModalRoute.withName("/Home"));
   }
 
-  _handleSignOut() async {
+  Future<void> _handleSignOut() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    _googleSignIn.signOut().whenComplete(
-        () => {prefs.setString("username", "none"), _navigateSplash()});
+    await FirebaseAuth.instance.signOut().whenComplete(() => {
+          prefs.setBool("username", false),
+          print("auth out"),
+          _navigateSplash()
+        });
+    await _googleSignIn.signOut().whenComplete(() => {
+          prefs.setBool("username", false),
+          print("google out"),
+          _navigateSplash()
+        });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   Widget taskList() {
-    return StreamBuilder(
-      stream: FirebaseFirestore.instance
-          .collection('tasks')
-          .doc(user.id)
-          .collection("task list")
-          .snapshots(),
-      builder: (context, AsyncSnapshot<QuerySnapshot> streamSnapshot) {
-        if (streamSnapshot.hasData) {
-          return ListView.builder(
-              itemCount: streamSnapshot.data!.docs.length,
-              itemBuilder: (ctx, index) {
-                String day =
-                    DateTime.parse(streamSnapshot.data!.docs[index]['date'])
-                        .day
-                        .toString();
-                String month =
-                    DateTime.parse(streamSnapshot.data!.docs[index]['date'])
-                        .month
-                        .toString();
-                String year =
-                    DateTime.parse(streamSnapshot.data!.docs[index]['date'])
-                        .year
-                        .toString();
-                return Card(
-                    child: ListTile(
-                  title: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      Text(streamSnapshot.data!.docs[index]['task']),
-                    ],
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      Text("$year.$month.$day"),
-                      const SizedBox(
-                        height: 5,
-                      ),
-                      Text(streamSnapshot.data!.docs[index]['descrtiption'])
-                    ],
-                  ),
-                  trailing: IconButton(
-                      alignment: Alignment.topCenter,
-                      onPressed: () {
-                        _deleteFirestoreData(
-                            streamSnapshot.data!.docs[index]["id"].toString());
-                      },
-                      icon: const Icon(Icons.delete, color: Colors.red)),
-                ));
-              });
-        } else {
-          return const Center(
-            child: Text("Create Your First Task!"),
-          );
-        }
-      },
-    );
+    if (_isLogin == true) {
+      return StreamBuilder(
+        stream: FirebaseFirestore.instance
+            .collection('tasks')
+            .doc(userId)
+            .collection("task list")
+            .snapshots(),
+        builder: (context, AsyncSnapshot<QuerySnapshot> streamSnapshot) {
+          if (streamSnapshot.hasData) {
+            return ListView.builder(
+                itemCount: streamSnapshot.data!.docs.length,
+                itemBuilder: (ctx, index) {
+                  String day =
+                      DateTime.parse(streamSnapshot.data!.docs[index]['date'])
+                          .day
+                          .toString();
+                  String month =
+                      DateTime.parse(streamSnapshot.data!.docs[index]['date'])
+                          .month
+                          .toString();
+                  String year =
+                      DateTime.parse(streamSnapshot.data!.docs[index]['date'])
+                          .year
+                          .toString();
+                  return Card(
+                      child: ListTile(
+                    title: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        Text(streamSnapshot.data!.docs[index]['task']),
+                      ],
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        Text("$year.$month.$day"),
+                        const SizedBox(
+                          height: 5,
+                        ),
+                        Text(streamSnapshot.data!.docs[index]['descrtiption'])
+                      ],
+                    ),
+                    trailing: IconButton(
+                        alignment: Alignment.topCenter,
+                        onPressed: () {
+                          _deleteFirestoreData(streamSnapshot
+                              .data!.docs[index]["id"]
+                              .toString());
+                        },
+                        icon: const Icon(Icons.delete, color: Colors.red)),
+                  ));
+                });
+          } else {
+            return const Center(
+              child: Text("Create Your First Task!"),
+            );
+          }
+        },
+      );
+    } else {
+      return (const Center(child: Text("No Taks Found")));
+    }
   }
 
   @override
@@ -175,6 +211,7 @@ class _HomeState extends State<Home> {
             children: [
               TextField(
                 controller: _taskNameController,
+                focusNode: _name_focus,
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
                   hintText: "Enter Task Name",
