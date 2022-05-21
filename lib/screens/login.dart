@@ -24,7 +24,6 @@ class LoginState extends State<Login> {
   @override
   void initState() {
     super.initState();
-    print("init state here");
     _googleSignIn.signOut();
     _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
       setState(() {

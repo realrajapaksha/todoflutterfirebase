@@ -93,6 +93,72 @@ class _HomeState extends State<Home> {
         () => {prefs.setString("username", "none"), _navigateSplash()});
   }
 
+  Widget taskList() {
+    return StreamBuilder(
+      stream: FirebaseFirestore.instance
+          .collection('tasks')
+          .doc(user.id)
+          .collection("task list")
+          .snapshots(),
+      builder: (context, AsyncSnapshot<QuerySnapshot> streamSnapshot) {
+        if (streamSnapshot.hasData) {
+          return ListView.builder(
+              itemCount: streamSnapshot.data!.docs.length,
+              itemBuilder: (ctx, index) {
+                String day =
+                    DateTime.parse(streamSnapshot.data!.docs[index]['date'])
+                        .day
+                        .toString();
+                String month =
+                    DateTime.parse(streamSnapshot.data!.docs[index]['date'])
+                        .month
+                        .toString();
+                String year =
+                    DateTime.parse(streamSnapshot.data!.docs[index]['date'])
+                        .year
+                        .toString();
+                return Card(
+                    child: ListTile(
+                  title: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Text(streamSnapshot.data!.docs[index]['task']),
+                    ],
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Text("$year.$month.$day"),
+                      const SizedBox(
+                        height: 5,
+                      ),
+                      Text(streamSnapshot.data!.docs[index]['descrtiption'])
+                    ],
+                  ),
+                  trailing: IconButton(
+                      alignment: Alignment.topCenter,
+                      onPressed: () {
+                        _deleteFirestoreData(
+                            streamSnapshot.data!.docs[index]["id"].toString());
+                      },
+                      icon: const Icon(Icons.delete, color: Colors.red)),
+                ));
+              });
+        } else {
+          return const Center(
+            child: Text("Create Your First Task!"),
+          );
+        }
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -157,73 +223,9 @@ class _HomeState extends State<Home> {
           const SizedBox(
             height: 10,
           ),
-          SizedBox(
-            height: 400,
-            width: double.infinity,
-            child: StreamBuilder(
-              stream:
-                  FirebaseFirestore.instance.collection('tasks').doc(user.id.toString()).collection("task list").snapshots(),
-              builder: (context, AsyncSnapshot<QuerySnapshot> streamSnapshot) {
-                if (streamSnapshot.hasData) {
-                  return ListView.builder(
-                      itemCount: streamSnapshot.data!.docs.length,
-                      itemBuilder: (ctx, index) {
-                        String day = DateTime.parse(
-                                streamSnapshot.data!.docs[index]['date'])
-                            .day
-                            .toString();
-                        String month = DateTime.parse(
-                                streamSnapshot.data!.docs[index]['date'])
-                            .month
-                            .toString();
-                        String year = DateTime.parse(
-                                streamSnapshot.data!.docs[index]['date'])
-                            .year
-                            .toString();
-                        return Card(
-                            child: ListTile(
-                          title: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(
-                                height: 10,
-                              ),
-                              Text(streamSnapshot.data!.docs[index]['task']),
-                            ],
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(
-                                height: 10,
-                              ),
-                              Text("$year.$month.$day"),
-                              const SizedBox(
-                                height: 5,
-                              ),
-                              Text(streamSnapshot.data!.docs[index]
-                                  ['descrtiption'])
-                            ],
-                          ),
-                          trailing: IconButton(
-                              alignment: Alignment.topCenter,
-                              onPressed: () {
-                                _deleteFirestoreData(streamSnapshot
-                                    .data!.docs[index]["id"]
-                                    .toString());
-                              },
-                              icon:
-                                  const Icon(Icons.delete, color: Colors.red)),
-                        ));
-                      });
-                } else {
-                  return const Center(
-                    child: Text("Create Yor First tODO Here"),
-                  );
-                }
-              },
-            ),
-          )
+          Flexible(
+              child: SizedBox(
+                  height: 400, width: double.infinity, child: taskList())),
         ]),
       ),
     );
