@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:todoflutterfirebase/screens/login.dart';
 
 class CreateAccount extends StatefulWidget {
   const CreateAccount({Key? key}) : super(key: key);
@@ -59,7 +58,6 @@ class _CreateAccountState extends State<CreateAccount> {
   }
 
   Scaffold _scaffold() {
-    print("okkkkkkkkkkkkkkkkkkkkkkkk");
     if (isCreated == true) {
       _delaySplash();
       return const Scaffold(
