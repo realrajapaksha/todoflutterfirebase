@@ -31,7 +31,7 @@ Simple Flutter todo App with Cloud Firebase Firestore Database, Firebase Auth an
 
 
 [stackoverflow Answer for signinReport](https://stackoverflow.com/a/60804020)  
-[Multidex Support](https://developer.android.com/studio/build/multidex)
+[Multidex Support](https://developer.android.com/studio/build/multidex)  
 [iOS google signin](https://developers.google.com/identity/sign-in/ios/start-integrating#add_a_url_scheme_to_your_project)
 
 ## References
