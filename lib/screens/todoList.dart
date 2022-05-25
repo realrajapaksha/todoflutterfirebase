@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:todoflutterfirebase/screens/addTask.dart';
 import 'package:todoflutterfirebase/screens/splashscreen.dart';
 
 GoogleSignIn _googleSignIn = GoogleSignIn(
@@ -21,43 +22,9 @@ class TodoList extends StatefulWidget {
 }
 
 class _TodoListState extends State<TodoList> {
-  var _taskNameController = TextEditingController();
-  var _taskDesController = TextEditingController();
-  var _name_focus = FocusNode();
-
-  bool _validateTaskDes = false;
-  bool _validateTaskName = false;
-
   var db = FirebaseFirestore.instance;
-
   String userId = "";
-
   bool _isLogin = false;
-
-  Future<void> _saveFirestoreData() async {
-    if (userId != "") {
-      Random random = new Random();
-      int id = random.nextInt(1000);
-
-      final task = <String, dynamic>{
-        "id": id,
-        "task": _taskNameController.text,
-        "descrtiption": _taskDesController.text,
-        "date": DateTime.now().toString(),
-      };
-
-      await db
-          .collection("tasks")
-          .doc(userId)
-          .collection("task list")
-          .doc(id.toString())
-          .set(task)
-          .whenComplete(() => {
-                _taskNameController.text = "",
-                _taskDesController.text = "",
-              });
-    }
-  }
 
   Future<void> _deleteFirestoreData(String id) async {
     db
@@ -74,6 +41,7 @@ class _TodoListState extends State<TodoList> {
 
   @override
   void initState() {
+    print("hi list");
     super.initState();
 
     //Check Google user
@@ -117,16 +85,16 @@ class _TodoListState extends State<TodoList> {
 
   Future<void> _handleSignOut() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await FirebaseAuth.instance.signOut().whenComplete(() => {
-          prefs.setBool("username", false),
-          print("auth out"),
-          _navigateSplash()
-        });
-    await _googleSignIn.signOut().whenComplete(() => {
-          prefs.setBool("username", false),
-          print("google out"),
-          _navigateSplash()
-        });
+    await FirebaseAuth.instance.signOut().whenComplete(
+        () => {prefs.setBool("username", false), _navigateSplash()});
+    await _googleSignIn.signOut().whenComplete(
+        () => {prefs.setBool("username", false), _navigateSplash()});
+  }
+
+  _referesh() {
+    setState(() {
+      _isLogin = _isLogin;
+    });
   }
 
   Widget taskList() {
@@ -138,7 +106,7 @@ class _TodoListState extends State<TodoList> {
             .collection("task list")
             .snapshots(),
         builder: (context, AsyncSnapshot<QuerySnapshot> streamSnapshot) {
-          if (streamSnapshot.hasData) {
+          if (streamSnapshot.data!.docs.isNotEmpty) {
             return ListView.builder(
                 itemCount: streamSnapshot.data!.docs.length,
                 itemBuilder: (ctx, index) {
@@ -155,38 +123,50 @@ class _TodoListState extends State<TodoList> {
                           .year
                           .toString();
                   return Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      elevation: 10.0,
                       child: ListTile(
-                    title: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(
-                          height: 10,
+                        title: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(
+                              height: 10,
+                            ),
+                            Text(streamSnapshot.data!.docs[index]['task'],
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20.0,
+                                )),
+                          ],
                         ),
-                        Text(streamSnapshot.data!.docs[index]['task']),
-                      ],
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(
-                          height: 10,
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(
+                              height: 3,
+                            ),
+                            Text("$year.$month.$day"),
+                            const SizedBox(
+                              height: 5,
+                            ),
+                            Text(
+                              streamSnapshot.data!.docs[index]['descrtiption'],
+                              style: const TextStyle(color: Colors.white54),
+                            )
+                          ],
                         ),
-                        Text("$year.$month.$day"),
-                        const SizedBox(
-                          height: 5,
-                        ),
-                        Text(streamSnapshot.data!.docs[index]['descrtiption'])
-                      ],
-                    ),
-                    trailing: IconButton(
-                        alignment: Alignment.topCenter,
-                        onPressed: () {
-                          _deleteFirestoreData(streamSnapshot
-                              .data!.docs[index]["id"]
-                              .toString());
-                        },
-                        icon: const Icon(Icons.delete, color: Colors.red)),
-                  ));
+                        trailing: IconButton(
+                            alignment: Alignment.topCenter,
+                            onPressed: () {
+                              _deleteFirestoreData(streamSnapshot
+                                  .data!.docs[index]["id"]
+                                  .toString());
+                            },
+                            icon: const Icon(Icons.delete, color: Colors.red)),
+                      ));
                 });
           } else {
             return const Center(
@@ -207,69 +187,43 @@ class _TodoListState extends State<TodoList> {
         actions: [
           IconButton(onPressed: _handleSignOut, icon: const Icon(Icons.logout))
         ],
-        title: const Text("tODO"),
+        title: const Text("MY tODO"),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(children: [
-          Column(
-            children: [
-              TextField(
-                controller: _taskNameController,
-                focusNode: _name_focus,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  hintText: "Enter Task Name",
-                  labelText: "Task Name",
-                  errorText: _validateTaskName ? "can't be empty" : null,
-                ),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              TextField(
-                controller: _taskDesController,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  hintText: "Enter Task Description",
-                  labelText: "Task Description",
-                  errorText: _validateTaskDes ? "can't be empty" : null,
-                ),
-              ),
-              const SizedBox(
-                width: 20.0,
-              ),
-              TextButton(
-                  style: TextButton.styleFrom(
-                      primary: Colors.white,
-                      backgroundColor: Colors.teal,
-                      textStyle: const TextStyle(fontSize: 15)),
-                  onPressed: () async {
-                    setState(() {
-                      _taskNameController.text.isEmpty
-                          ? _validateTaskName = true
-                          : _validateTaskName = false;
-                      _taskDesController.text.isEmpty
-                          ? _validateTaskDes = true
-                          : _validateTaskDes = false;
-                    });
-                    if (_validateTaskName == false &&
-                        _validateTaskDes == false) {
-                      //save data firebase
-                      _saveFirestoreData();
-                    }
-                  },
-                  child: const Text("Save")),
-            ],
-          ),
-          const SizedBox(
-            height: 10,
-          ),
-          Flexible(
-              child: SizedBox(
-                  height: 400, width: double.infinity, child: taskList())),
-        ]),
+      body: RefreshIndicator(
+        onRefresh: () => _referesh(),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: taskList(),
+        ),
       ),
+      floatingActionButton: FloatingActionButton(
+          onPressed: () {},
+          backgroundColor: Colors.teal,
+          child: IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              showModalBottomSheet(
+                  context: context,
+                  backgroundColor: Color.fromARGB(255, 37, 37, 37),
+                  shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(25.0),
+                          topRight: Radius.circular(25.0))),
+                  builder: (context) {
+                    return SingleChildScrollView(
+                      child: Container(
+                          padding: EdgeInsets.only(
+                              bottom: MediaQuery.of(context).viewInsets.bottom),
+                          child: const Padding(
+                            padding:
+                                EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 10.0),
+                            child: AddTask(),
+                          )),
+                    );
+                  });
+            },
+            color: Colors.white,
+          )),
     );
   }
 }
