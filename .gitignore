@@ -9,7 +9,7 @@
 .buildlog/
 .history
 .svn/
-
+.plist
 # IntelliJ related
 *.iml
 *.ipr
