@@ -1,18 +1,11 @@
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-
-GoogleSignIn _googleSignIn = GoogleSignIn(
-  scopes: <String>[
-    'email',
-  ],
-);
 
 class AddTask extends StatefulWidget {
-  const AddTask({Key? key}) : super(key: key);
+  final String userId;
+  const AddTask(this.userId, {Key? key}) : super(key: key);
 
   @override
   State<AddTask> createState() => _AddTaskState();
@@ -28,69 +21,30 @@ class _AddTaskState extends State<AddTask> {
 
   var db = FirebaseFirestore.instance;
 
-  String userId = "";
-
   bool _isLogin = false;
 
   Future<void> _saveFirestoreData() async {
-    Navigator.pop(context);
-    if (userId == "1231") {
-      Random random = new Random();
-      int id = random.nextInt(1000);
+    Random random = new Random();
+    int id = random.nextInt(1000);
 
-      final task = <String, dynamic>{
-        "id": id,
-        "task": _taskNameController.text,
-        "descrtiption": _taskDesController.text,
-        "date": DateTime.now().toString(),
-      };
+    final task = <String, dynamic>{
+      "id": id,
+      "task": _taskNameController.text,
+      "descrtiption": _taskDesController.text,
+      "date": DateTime.now().toString(),
+    };
 
-      await db
-          .collection("tasks")
-          .doc(userId)
-          .collection("task list")
-          .doc(id.toString())
-          .set(task)
-          .whenComplete(() => {
-                _taskNameController.text = "",
-                _taskDesController.text = "",
-              });
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-
-    //Check Google user
-    _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
-      setState(() {
-        userId = account!.id;
-        _isLogin = true;
-      });
-    });
-
-    //Check Email user
-    FirebaseAuth.instance.authStateChanges().listen((User? user) {
-      if (user != null) {
-        setState(() {
-          _isLogin = true;
-          userId = user.uid;
-        });
-      }
-    });
-
-    _googleSignIn.signInSilently().then((value) => {
-          setState(() {
-            if (_googleSignIn.currentUser!.id.isNotEmpty) {
-              userId = _googleSignIn.currentUser!.id;
-            }
-
-            if (userId != "") {
-              _isLogin = true;
-            }
-          })
-        });
+    await db
+        .collection("tasks")
+        .doc(widget.userId)
+        .collection("task list")
+        .doc(id.toString())
+        .set(task)
+        .whenComplete(() => {
+              _taskNameController.text = "",
+              _taskDesController.text = "",
+              Navigator.pop(context)
+            });
   }
 
   @override

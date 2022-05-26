@@ -111,17 +111,15 @@ class _TodoListState extends State<TodoList> {
               return const Center(
                 child: Text("No Internet Connection"),
               );
-            case ConnectionState.active:
+
             case ConnectionState.waiting:
               return const Center(
-                child: Text("Create Your First Task!"),
+                child: Text("Loading Task.."),
               );
             case ConnectionState.done:
-            print("done");
-              print(streamSnapshot.data!.docs);
-              if (streamSnapshot.hasError) {
-                return Text('Error: ${streamSnapshot.error}');
-              } else {
+
+            case ConnectionState.active:
+              if (streamSnapshot.data!.docs.isNotEmpty) {
                 return ListView.builder(
                     itemCount: streamSnapshot.data!.docs.length,
                     itemBuilder: (ctx, index) {
@@ -185,11 +183,10 @@ class _TodoListState extends State<TodoList> {
                                     color: Colors.red)),
                           ));
                     });
+              } else {
+                return (const Center(child: Text("Create Your First Task")));
               }
-            // You can reach your snapshot.data['url'] in here
           }
-
-          print(streamSnapshot);
         },
       );
     } else {
@@ -231,10 +228,10 @@ class _TodoListState extends State<TodoList> {
                       child: Container(
                           padding: EdgeInsets.only(
                               bottom: MediaQuery.of(context).viewInsets.bottom),
-                          child: const Padding(
-                            padding:
-                                EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 10.0),
-                            child: AddTask(),
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(
+                                20.0, 20.0, 20.0, 10.0),
+                            child: AddTask(userId),
                           )),
                     );
                   });
