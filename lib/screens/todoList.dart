@@ -41,7 +41,6 @@ class _TodoListState extends State<TodoList> {
 
   @override
   void initState() {
-    print("hi list");
     super.initState();
 
     //Check Google user
@@ -64,7 +63,7 @@ class _TodoListState extends State<TodoList> {
 
     _googleSignIn.signInSilently().then((value) => {
           setState(() {
-            if (_googleSignIn.currentUser!.id.isNotEmpty) {
+            if (_googleSignIn.currentUser != null) {
               userId = _googleSignIn.currentUser!.id;
             }
 
@@ -93,8 +92,9 @@ class _TodoListState extends State<TodoList> {
 
   _referesh() {
     setState(() {
-      _isLogin = _isLogin;
+      _isLogin = true;
     });
+    return Future.delayed(const Duration(seconds: 1));
   }
 
   Widget taskList() {
@@ -106,73 +106,90 @@ class _TodoListState extends State<TodoList> {
             .collection("task list")
             .snapshots(),
         builder: (context, AsyncSnapshot<QuerySnapshot> streamSnapshot) {
-          if (streamSnapshot.data!.docs.isNotEmpty) {
-            return ListView.builder(
-                itemCount: streamSnapshot.data!.docs.length,
-                itemBuilder: (ctx, index) {
-                  String day =
-                      DateTime.parse(streamSnapshot.data!.docs[index]['date'])
+          switch (streamSnapshot.connectionState) {
+            case ConnectionState.none:
+              return const Center(
+                child: Text("No Internet Connection"),
+              );
+            case ConnectionState.active:
+            case ConnectionState.waiting:
+              return const Center(
+                child: Text("Create Your First Task!"),
+              );
+            case ConnectionState.done:
+            print("done");
+              print(streamSnapshot.data!.docs);
+              if (streamSnapshot.hasError) {
+                return Text('Error: ${streamSnapshot.error}');
+              } else {
+                return ListView.builder(
+                    itemCount: streamSnapshot.data!.docs.length,
+                    itemBuilder: (ctx, index) {
+                      String day = DateTime.parse(
+                              streamSnapshot.data!.docs[index]['date'])
                           .day
                           .toString();
-                  String month =
-                      DateTime.parse(streamSnapshot.data!.docs[index]['date'])
+                      String month = DateTime.parse(
+                              streamSnapshot.data!.docs[index]['date'])
                           .month
                           .toString();
-                  String year =
-                      DateTime.parse(streamSnapshot.data!.docs[index]['date'])
+                      String year = DateTime.parse(
+                              streamSnapshot.data!.docs[index]['date'])
                           .year
                           .toString();
-                  return Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.0),
-                      ),
-                      elevation: 10.0,
-                      child: ListTile(
-                        title: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(
-                              height: 10,
+                      return Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                          elevation: 10.0,
+                          child: ListTile(
+                            title: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                Text(streamSnapshot.data!.docs[index]['task'],
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20.0,
+                                    )),
+                              ],
                             ),
-                            Text(streamSnapshot.data!.docs[index]['task'],
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 20.0,
-                                )),
-                          ],
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(
-                              height: 3,
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(
+                                  height: 3,
+                                ),
+                                Text("$year.$month.$day"),
+                                const SizedBox(
+                                  height: 5,
+                                ),
+                                Text(
+                                  streamSnapshot.data!.docs[index]
+                                      ['descrtiption'],
+                                  style: const TextStyle(color: Colors.white54),
+                                )
+                              ],
                             ),
-                            Text("$year.$month.$day"),
-                            const SizedBox(
-                              height: 5,
-                            ),
-                            Text(
-                              streamSnapshot.data!.docs[index]['descrtiption'],
-                              style: const TextStyle(color: Colors.white54),
-                            )
-                          ],
-                        ),
-                        trailing: IconButton(
-                            alignment: Alignment.topCenter,
-                            onPressed: () {
-                              _deleteFirestoreData(streamSnapshot
-                                  .data!.docs[index]["id"]
-                                  .toString());
-                            },
-                            icon: const Icon(Icons.delete, color: Colors.red)),
-                      ));
-                });
-          } else {
-            return const Center(
-              child: Text("Create Your First Task!"),
-            );
+                            trailing: IconButton(
+                                alignment: Alignment.topCenter,
+                                onPressed: () {
+                                  _deleteFirestoreData(streamSnapshot
+                                      .data!.docs[index]["id"]
+                                      .toString());
+                                },
+                                icon: const Icon(Icons.delete,
+                                    color: Colors.red)),
+                          ));
+                    });
+              }
+            // You can reach your snapshot.data['url'] in here
           }
+
+          print(streamSnapshot);
         },
       );
     } else {
