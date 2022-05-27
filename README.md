@@ -27,12 +27,13 @@ Simple Flutter todo App with Cloud Firebase Firestore Database, Firebase Auth an
 4. copy SHA1 Value in Task :app:signingReport.
 5. Go to firebase project -> Authentication -> Sign-in Methods -> Enable Google.
 6. Go to firebase project -> Project settings -> General -> Your apps >  select your android app -> add fingerprints -> paste your SHA1 value and save.
-- android -> edit gradle.properties -> paste existing value of org.gradle.jvmargs
+- android -> edit gradle.properties -> paste existing value of org.gradle.jvmargs  
 
+## Errors and Fixers
 
 [stackoverflow Answer for signinReport](https://stackoverflow.com/a/60804020)  
 [Multidex Support](https://developer.android.com/studio/build/multidex)  
-[iOS google signin](https://developers.google.com/identity/sign-in/ios/start-integrating#add_a_url_scheme_to_your_project)
+[iOS Error running pod install](https://github.com/flutter/flutter/issues/104118)  
 
 ## References
 
