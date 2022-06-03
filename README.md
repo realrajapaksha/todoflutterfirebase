@@ -20,7 +20,7 @@ Simple Flutter todo App with Cloud Firebase Firestore Database, Firebase Auth an
 4. Set flutterfire_cli path
 5. flutterfire configure
 
-## Setup Google Signin
+## Setup Firebase Auth / Google Signin
 1. flutter pub add google_sign_in: ^5.3.1.
 2. android -> edit gradle.properties -> copy existing value of org.gradle.jvmargs and replace it -XX:MaxHeapSize=256m -Xmx256m.
 3. android -> open cmd -> gradlew signingReport.
