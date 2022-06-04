@@ -146,6 +146,7 @@ class _CreateAccountState extends State<CreateAccount> {
 
   @override
   Widget build(BuildContext context) {
+    print("create account");
     return Scaffold(
       appBar: AppBar(
         title: const Text("Create Account"),

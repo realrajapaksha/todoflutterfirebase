@@ -49,6 +49,7 @@ class _AddTaskState extends State<AddTask> {
 
   @override
   Widget build(BuildContext context) {
+    print("add task");
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [

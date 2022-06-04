@@ -40,5 +40,4 @@ Simple Flutter todo App with Cloud Firebase Firestore Database, Firebase Auth an
 [Flutter Documentation](https://docs.flutter.dev/)  
 [Add Firebase to your Flutter app documentation](https://firebase.google.com/docs/flutter/setup?platform=android)  
 [Firebase Firestore Documentation](https://firebase.google.com/docs/firestore/quickstart#dart)  
-[Dart Flutter with Firestore](https://firebase.google.com/docs/firestore/quickstart#dart_4)  
 [Firebase Auth](https://firebase.flutter.dev/docs/auth/usage)  

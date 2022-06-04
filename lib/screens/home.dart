@@ -23,6 +23,7 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
+    print("Home");
     return Scaffold(
       body: PageView(
         controller: pageController,
@@ -39,9 +40,6 @@ class _HomeState extends State<Home> {
         type: BottomNavigationBarType.shifting, // Fixed
         currentIndex: _selectedIndex,
         elevation: 10,
-        // selectedItemColor:  Colors.white,
-        // selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-        // unselectedItemColor: Colors.black38,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
               backgroundColor: Colors.teal,
@@ -54,7 +52,7 @@ class _HomeState extends State<Home> {
           BottomNavigationBarItem(
               backgroundColor: Colors.redAccent,
               icon: Icon(Icons.delete),
-              label: "Delete"),
+              label: "Trash"),
         ],
       ),
     );

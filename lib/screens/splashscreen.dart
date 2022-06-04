@@ -18,13 +18,11 @@ class _SplashScreenState extends State<SplashScreen> {
 
     Future.delayed(const Duration(seconds: 2), () {
       if (res) {
-        print("home");
         Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const Home()),
             ModalRoute.withName("/Home"));
       } else {
-        print("login");
         Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const Login()),
@@ -35,6 +33,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print("SplashScreen");
     _delaySplash();
     return Scaffold(
       body: Center(

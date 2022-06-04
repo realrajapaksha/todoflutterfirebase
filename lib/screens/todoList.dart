@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +23,25 @@ class _TodoListState extends State<TodoList> {
   var db = FirebaseFirestore.instance;
   String userId = "";
   bool _isLogin = false;
+  late final List<bool> _isChecked = List<bool>.filled(500, false);
+
+  Future<void> _saveFirestoreData(
+      String id, String datetime, String taskname, String description) async {
+    final task = <String, dynamic>{
+      "id": id,
+      "task": taskname,
+      "descrtiption": description,
+      "date": datetime,
+    };
+
+    await db
+        .collection("tasks")
+        .doc(userId)
+        .collection("complete list")
+        .doc(id.toString())
+        .set(task)
+        .whenComplete(() => {_deleteFirestoreData(id)});
+  }
 
   Future<void> _deleteFirestoreData(String id) async {
     db
@@ -97,6 +114,18 @@ class _TodoListState extends State<TodoList> {
     return Future.delayed(const Duration(seconds: 1));
   }
 
+  Color getColor(Set<MaterialState> states) {
+    const Set<MaterialState> interactiveStates = <MaterialState>{
+      MaterialState.pressed,
+      MaterialState.hovered,
+      MaterialState.focused,
+    };
+    if (states.any(interactiveStates.contains)) {
+      return Colors.black;
+    }
+    return Colors.blue;
+  }
+
   Widget taskList() {
     if (_isLogin == true) {
       return StreamBuilder(
@@ -135,6 +164,13 @@ class _TodoListState extends State<TodoList> {
                               streamSnapshot.data!.docs[index]['date'])
                           .year
                           .toString();
+                      String id =
+                          streamSnapshot.data!.docs[index]['id'].toString();
+                      String date = streamSnapshot.data!.docs[index]['date'];
+                      String taskname =
+                          streamSnapshot.data!.docs[index]['task'];
+                      String description =
+                          streamSnapshot.data!.docs[index]['descrtiption'];
                       return Card(
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10.0),
@@ -172,15 +208,21 @@ class _TodoListState extends State<TodoList> {
                                 )
                               ],
                             ),
-                            trailing: IconButton(
-                                alignment: Alignment.topCenter,
-                                onPressed: () {
-                                  _deleteFirestoreData(streamSnapshot
-                                      .data!.docs[index]["id"]
-                                      .toString());
-                                },
-                                icon: const Icon(Icons.delete,
-                                    color: Colors.red)),
+                            leading: Checkbox(
+                              checkColor: Colors.white,
+                              fillColor:
+                                  MaterialStateProperty.resolveWith(getColor),
+                              value: _isChecked[index],
+                              onChanged: ((value) => {
+                                    setState(
+                                      () {
+                                        _isChecked[index] = value!;
+                                        _saveFirestoreData(
+                                            id, date, taskname, description);
+                                      },
+                                    )
+                                  }),
+                            ),
                           ));
                     });
               } else {
@@ -196,6 +238,7 @@ class _TodoListState extends State<TodoList> {
 
   @override
   Widget build(BuildContext context) {
+    print("todolist");
     return Scaffold(
       appBar: AppBar(
         actions: [

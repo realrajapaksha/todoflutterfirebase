@@ -113,6 +113,7 @@ class LoginState extends State<Login> {
 
   @override
   Widget build(BuildContext context) {
+    print("login");
     final GoogleSignInAccount? user = _currentUser;
 
     if (_isLoginwithEmail == true) {
