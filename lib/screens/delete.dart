@@ -1,16 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-
-GoogleSignIn _googleSignIn = GoogleSignIn(
-  scopes: <String>[
-    'email',
-  ],
-);
 
 class Delete extends StatefulWidget {
-  const Delete({Key? key}) : super(key: key);
+  final String userId;
+  const Delete(this.userId, {Key? key}) : super(key: key);
 
   @override
   State<Delete> createState() => _DeleteState();
@@ -18,13 +11,11 @@ class Delete extends StatefulWidget {
 
 class _DeleteState extends State<Delete> {
   var db = FirebaseFirestore.instance;
-  String userId = "";
-  bool _isLogin = false;
 
   Future<void> _deleteFirestoreData(String id) async {
     db
         .collection("tasks")
-        .doc(userId)
+        .doc(widget.userId)
         .collection("delete list")
         .doc(id)
         .delete()
@@ -32,48 +23,6 @@ class _DeleteState extends State<Delete> {
           (doc) => print("Document deleted"),
           onError: (e) => print("Error updating document $e"),
         );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-
-    //Check Google user
-    _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
-      setState(() {
-        userId = account!.id;
-        _isLogin = true;
-      });
-    });
-
-    //Check Email user
-    FirebaseAuth.instance.authStateChanges().listen((User? user) {
-      if (user != null) {
-        setState(() {
-          _isLogin = true;
-          userId = user.uid;
-        });
-      }
-    });
-
-    _googleSignIn.signInSilently().then((value) => {
-          setState(() {
-            if (_googleSignIn.currentUser != null) {
-              userId = _googleSignIn.currentUser!.id;
-            }
-
-            if (userId != "") {
-              _isLogin = true;
-            }
-          })
-        });
-  }
-
-  _referesh() {
-    setState(() {
-      _isLogin = true;
-    });
-    return Future.delayed(const Duration(seconds: 1));
   }
 
   Color getColor(Set<MaterialState> states) {
@@ -89,115 +38,108 @@ class _DeleteState extends State<Delete> {
   }
 
   Widget taskList() {
-    if (_isLogin == true) {
-      return StreamBuilder(
-        stream: FirebaseFirestore.instance
-            .collection('tasks')
-            .doc(userId)
-            .collection("delete list")
-            .snapshots(),
-        builder: (context, AsyncSnapshot<QuerySnapshot> streamSnapshot) {
-          switch (streamSnapshot.connectionState) {
-            case ConnectionState.none:
-              return const Center(
-                child: Text("No Internet Connection"),
-              );
+    return StreamBuilder(
+      stream: FirebaseFirestore.instance
+          .collection('tasks')
+          .doc(widget.userId)
+          .collection("delete list")
+          .snapshots(),
+      builder: (context, AsyncSnapshot<QuerySnapshot> streamSnapshot) {
+        switch (streamSnapshot.connectionState) {
+          case ConnectionState.none:
+            return const Center(
+              child: Text("No Internet Connection"),
+            );
 
-            case ConnectionState.waiting:
-              return const Center(
-                child: Text("Loading Task.."),
-              );
-            case ConnectionState.done:
+          case ConnectionState.waiting:
+            return const Center(
+              child: Text("Loading Task.."),
+            );
+          case ConnectionState.done:
 
-            case ConnectionState.active:
-              if (streamSnapshot.data!.docs.isNotEmpty) {
-                return ListView.builder(
-                    itemCount: streamSnapshot.data!.docs.length,
-                    itemBuilder: (ctx, index) {
-                      String day = DateTime.parse(
-                              streamSnapshot.data!.docs[index]['date'])
-                          .day
-                          .toString();
-                      String month = DateTime.parse(
-                              streamSnapshot.data!.docs[index]['date'])
-                          .month
-                          .toString();
-                      String year = DateTime.parse(
-                              streamSnapshot.data!.docs[index]['date'])
-                          .year
-                          .toString();
-                      String id =
-                          streamSnapshot.data!.docs[index]['id'].toString();
-                      return Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0),
+          case ConnectionState.active:
+            if (streamSnapshot.data!.docs.isNotEmpty) {
+              return ListView.builder(
+                  itemCount: streamSnapshot.data!.docs.length,
+                  itemBuilder: (ctx, index) {
+                    String day =
+                        DateTime.parse(streamSnapshot.data!.docs[index]['date'])
+                            .day
+                            .toString();
+                    String month =
+                        DateTime.parse(streamSnapshot.data!.docs[index]['date'])
+                            .month
+                            .toString();
+                    String year =
+                        DateTime.parse(streamSnapshot.data!.docs[index]['date'])
+                            .year
+                            .toString();
+                    String id =
+                        streamSnapshot.data!.docs[index]['id'].toString();
+                    return Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        elevation: 10.0,
+                        child: ListTile(
+                          title: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(
+                                height: 10,
+                              ),
+                              Text(streamSnapshot.data!.docs[index]['task'],
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20.0,
+                                  )),
+                            ],
                           ),
-                          elevation: 10.0,
-                          child: ListTile(
-                            title: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(
-                                  height: 10,
-                                ),
-                                Text(streamSnapshot.data!.docs[index]['task'],
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 20.0,
-                                    )),
-                              ],
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(
-                                  height: 3,
-                                ),
-                                Text("$year.$month.$day"),
-                                const SizedBox(
-                                  height: 5,
-                                ),
-                                Text(
-                                  streamSnapshot.data!.docs[index]
-                                      ['descrtiption'],
-                                  style: const TextStyle(color: Colors.white54),
-                                )
-                              ],
-                            ),
-                            trailing: IconButton(
-                                alignment: Alignment.topCenter,
-                                onPressed: () {
-                                  _deleteFirestoreData(id);
-                                },
-                                icon: const Icon(Icons.delete,
-                                    color: Colors.red)),
-                          ));
-                    });
-              } else {
-                return (const Center(child: Text("Trash is Empty")));
-              }
-          }
-        },
-      );
-    } else {
-      return (const Center(child: Text("No Taks Found")));
-    }
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(
+                                height: 3,
+                              ),
+                              Text("$year.$month.$day"),
+                              const SizedBox(
+                                height: 5,
+                              ),
+                              Text(
+                                streamSnapshot.data!.docs[index]
+                                    ['descrtiption'],
+                                style: const TextStyle(color: Colors.white54),
+                              )
+                            ],
+                          ),
+                          trailing: IconButton(
+                              alignment: Alignment.topCenter,
+                              onPressed: () {
+                                _deleteFirestoreData(id);
+                              },
+                              icon:
+                                  const Icon(Icons.delete, color: Colors.red)),
+                        ));
+                  });
+            } else {
+              return (const Center(child: Text("Trash is Empty")));
+            }
+        }
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    print("complete");
+    print("delete");
     return Scaffold(
       appBar: AppBar(
         title: const Text("Trash"),
       ),
-      body: RefreshIndicator(
-        onRefresh: () => _referesh(),
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: taskList(),
-        ),
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: taskList(),
       ),
     );
   }

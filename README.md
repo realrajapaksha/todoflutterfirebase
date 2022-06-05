@@ -12,6 +12,7 @@ Simple Flutter todo App with Cloud Firebase Firestore Database, Firebase Auth an
 [google_sign_in: ^5.3.1](https://pub.dev/packages/google_sign_in)  
 [shared_preferences: ^2.0.15](https://pub.dev/packages/shared_preferences)  
 [flutter_signin_button: ^2.0.0](https://pub.dev/packages/flutter_signin_button)  
+[provider: ^6.0.3](https://pub.dev/packages/provider)  
 
 ## Install Firebase cmd
 1. npm install -g firebase-tools

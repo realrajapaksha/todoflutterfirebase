@@ -1,6 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:provider/provider.dart';
+import 'package:todoflutterfirebase/providers/login_provider.dart';
+
+final GoogleSignIn _googleSignIn = GoogleSignIn(
+  scopes: <String>[
+    'email',
+  ],
+);
 
 class CreateAccount extends StatefulWidget {
   const CreateAccount({Key? key}) : super(key: key);
@@ -10,17 +18,8 @@ class CreateAccount extends StatefulWidget {
 }
 
 class _CreateAccountState extends State<CreateAccount> {
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: <String>[
-      'email',
-    ],
-  );
-
   var _emailController = TextEditingController();
   var _passwordController = TextEditingController();
-
-  bool _validateEmail = false;
-  bool _validatePassword = false;
 
   String errorUI = "";
 
@@ -67,76 +66,89 @@ class _CreateAccountState extends State<CreateAccount> {
       return Scaffold(
         body: SingleChildScrollView(
           child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(top: 100),
-                  child: Icon(
-                    Icons.account_circle,
-                    color: Colors.blueGrey,
-                    size: 80,
-                  ),
-                ),
-                const SizedBox(
-                  height: 15,
-                ),
-                Padding(
-                  padding:
-                      const EdgeInsets.only(left: 20, right: 20, bottom: 10),
-                  child: TextField(
-                    textAlign: TextAlign.center,
-                    controller: _emailController,
-                    decoration: InputDecoration(
-                      border: const OutlineInputBorder(),
-                      hintText: "Email",
-                      errorText: _validateEmail ? "can't be empty" : null,
+            child: Consumer<LoginData>(
+              builder: (context, value, child) {
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(top: 100),
+                      child: Icon(
+                        Icons.account_circle,
+                        color: Colors.blueGrey,
+                        size: 80,
+                      ),
                     ),
-                  ),
-                ),
-                Padding(
-                  padding:
-                      const EdgeInsets.only(left: 20, right: 20, bottom: 20),
-                  child: TextField(
-                    textAlign: TextAlign.center,
-                    controller: _passwordController,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      border: const OutlineInputBorder(),
-                      hintText: "Password",
-                      errorText: _validatePassword ? "can't be empty" : null,
+                    const SizedBox(
+                      height: 15,
                     ),
-                  ),
-                ),
-                Text(
-                  errorUI,
-                  style: const TextStyle(color: Colors.red),
-                ),
-                TextButton(
-                  style: TextButton.styleFrom(
-                    elevation: 2.0,
-                    fixedSize: const Size(220, 15),
-                    primary: Colors.white,
-                    backgroundColor: Colors.blue,
-                  ),
-                  onPressed: () async {
-                    setState(() {
-                      _emailController.text.isEmpty
-                          ? _validateEmail = true
-                          : _validateEmail = false;
-                      _passwordController.text.isEmpty
-                          ? _validatePassword = true
-                          : _validatePassword = false;
-                    });
-                    if (_validateEmail == false && _validatePassword == false) {
-                      //save data firebase
-                      _handleCreateWithEmail();
-                    }
-                  },
-                  child: const Text("Create with Email"),
-                ),
-              ],
+                    Padding(
+                      padding: const EdgeInsets.only(
+                          left: 20, right: 20, bottom: 10),
+                      child: TextField(
+                        textAlign: TextAlign.center,
+                        controller: _emailController,
+                        decoration: InputDecoration(
+                          border: const OutlineInputBorder(),
+                          hintText: "Email",
+                          errorText:
+                              value.validateEmail ? "can't be empty" : null,
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(
+                          left: 20, right: 20, bottom: 20),
+                      child: TextField(
+                        textAlign: TextAlign.center,
+                        controller: _passwordController,
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          border: const OutlineInputBorder(),
+                          hintText: "Password",
+                          errorText:
+                              value.validatePassword ? "can't be empty" : null,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      errorUI,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        elevation: 2.0,
+                        fixedSize: const Size(220, 15),
+                        primary: Colors.white,
+                        backgroundColor: Colors.blue,
+                      ),
+                      onPressed: () async {
+                        _emailController.text.isEmpty
+                            ? Provider.of<LoginData>(context, listen: false)
+                                .changeValidateEmail(true)
+                            : Provider.of<LoginData>(context, listen: false)
+                                .changeValidateEmail(false);
+                        _passwordController.text.isEmpty
+                            ? Provider.of<LoginData>(context, listen: false)
+                                .changeValidatePassword(true)
+                            : Provider.of<LoginData>(context, listen: false)
+                                .changeValidatePassword(false);
+                        if (Provider.of<LoginData>(context, listen: false)
+                                    .validateEmail ==
+                                false &&
+                            Provider.of<LoginData>(context, listen: false)
+                                    .validatePassword ==
+                                false) {
+                          //save data firebase
+                          _handleCreateWithEmail();
+                        }
+                      },
+                      child: const Text("Create with Email"),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),
@@ -148,12 +160,14 @@ class _CreateAccountState extends State<CreateAccount> {
   Widget build(BuildContext context) {
     print("create account");
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Create Account"),
-      ),
-      body: Center(
-        child: _scaffold(),
-      ),
-    );
+        appBar: AppBar(
+          title: const Text("Create Account"),
+        ),
+        body: ChangeNotifierProvider(
+          create: (context) => LoginData(),
+          builder: (BuildContext context, child) {
+            return _scaffold();
+          },
+        ));
   }
 }

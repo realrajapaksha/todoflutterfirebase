@@ -13,7 +13,8 @@ GoogleSignIn _googleSignIn = GoogleSignIn(
 );
 
 class TodoList extends StatefulWidget {
-  const TodoList({Key? key}) : super(key: key);
+  final String userId;
+  const TodoList(this.userId, {Key? key}) : super(key: key);
 
   @override
   State<TodoList> createState() => _TodoListState();
@@ -21,8 +22,7 @@ class TodoList extends StatefulWidget {
 
 class _TodoListState extends State<TodoList> {
   var db = FirebaseFirestore.instance;
-  String userId = "";
-  bool _isLogin = false;
+
   late final List<bool> _isChecked = List<bool>.filled(500, false);
 
   Future<void> _saveFirestoreData(
@@ -36,7 +36,7 @@ class _TodoListState extends State<TodoList> {
 
     await db
         .collection("tasks")
-        .doc(userId)
+        .doc(widget.userId)
         .collection("complete list")
         .doc(id.toString())
         .set(task)
@@ -46,7 +46,7 @@ class _TodoListState extends State<TodoList> {
   Future<void> _deleteFirestoreData(String id) async {
     db
         .collection("tasks")
-        .doc(userId)
+        .doc(widget.userId)
         .collection("task list")
         .doc(id)
         .delete()
@@ -54,41 +54,6 @@ class _TodoListState extends State<TodoList> {
           (doc) => print("Document deleted"),
           onError: (e) => print("Error updating document $e"),
         );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-
-    //Check Google user
-    _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
-      setState(() {
-        userId = account!.id;
-        _isLogin = true;
-      });
-    });
-
-    //Check Email user
-    FirebaseAuth.instance.authStateChanges().listen((User? user) {
-      if (user != null) {
-        setState(() {
-          _isLogin = true;
-          userId = user.uid;
-        });
-      }
-    });
-
-    _googleSignIn.signInSilently().then((value) => {
-          setState(() {
-            if (_googleSignIn.currentUser != null) {
-              userId = _googleSignIn.currentUser!.id;
-            }
-
-            if (userId != "") {
-              _isLogin = true;
-            }
-          })
-        });
   }
 
   void _navigateSplash() {
@@ -101,17 +66,20 @@ class _TodoListState extends State<TodoList> {
 
   Future<void> _handleSignOut() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await FirebaseAuth.instance.signOut().whenComplete(
-        () => {prefs.setBool("username", false), _navigateSplash()});
-    await _googleSignIn.signOut().whenComplete(
-        () => {prefs.setBool("username", false), _navigateSplash()});
-  }
-
-  _referesh() {
-    setState(() {
-      _isLogin = true;
-    });
-    return Future.delayed(const Duration(seconds: 1));
+    String loginFrom = prefs.getString("loginFrom") ?? "";
+    if (loginFrom == "google") {
+      await _googleSignIn.signOut().whenComplete(() => {
+            prefs.setBool("username", false),
+            prefs.setString("loginFrom", ""),
+            _navigateSplash()
+          });
+    } else if (loginFrom == "email") {
+      await FirebaseAuth.instance.signOut().whenComplete(() => {
+            prefs.setBool("username", false),
+            prefs.setString("loginFrom", ""),
+            _navigateSplash()
+          });
+    }
   }
 
   Color getColor(Set<MaterialState> states) {
@@ -127,113 +95,108 @@ class _TodoListState extends State<TodoList> {
   }
 
   Widget taskList() {
-    if (_isLogin == true) {
-      return StreamBuilder(
-        stream: FirebaseFirestore.instance
-            .collection('tasks')
-            .doc(userId)
-            .collection("task list")
-            .snapshots(),
-        builder: (context, AsyncSnapshot<QuerySnapshot> streamSnapshot) {
-          switch (streamSnapshot.connectionState) {
-            case ConnectionState.none:
-              return const Center(
-                child: Text("No Internet Connection"),
-              );
+    return StreamBuilder(
+      stream: FirebaseFirestore.instance
+          .collection('tasks')
+          .doc(widget.userId)
+          .collection("task list")
+          .snapshots(),
+      builder: (context, AsyncSnapshot<QuerySnapshot> streamSnapshot) {
+        switch (streamSnapshot.connectionState) {
+          case ConnectionState.none:
+            return const Center(
+              child: Text("No Internet Connection"),
+            );
 
-            case ConnectionState.waiting:
-              return const Center(
-                child: Text("Loading Task.."),
-              );
-            case ConnectionState.done:
+          case ConnectionState.waiting:
+            return const Center(
+              child: Text("Loading Task.."),
+            );
+          case ConnectionState.done:
 
-            case ConnectionState.active:
-              if (streamSnapshot.data!.docs.isNotEmpty) {
-                return ListView.builder(
-                    itemCount: streamSnapshot.data!.docs.length,
-                    itemBuilder: (ctx, index) {
-                      String day = DateTime.parse(
-                              streamSnapshot.data!.docs[index]['date'])
-                          .day
-                          .toString();
-                      String month = DateTime.parse(
-                              streamSnapshot.data!.docs[index]['date'])
-                          .month
-                          .toString();
-                      String year = DateTime.parse(
-                              streamSnapshot.data!.docs[index]['date'])
-                          .year
-                          .toString();
-                      String id =
-                          streamSnapshot.data!.docs[index]['id'].toString();
-                      String date = streamSnapshot.data!.docs[index]['date'];
-                      String taskname =
-                          streamSnapshot.data!.docs[index]['task'];
-                      String description =
-                          streamSnapshot.data!.docs[index]['descrtiption'];
-                      return Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0),
+          case ConnectionState.active:
+            if (streamSnapshot.data!.docs.isNotEmpty) {
+              return ListView.builder(
+                  itemCount: streamSnapshot.data!.docs.length,
+                  itemBuilder: (ctx, index) {
+                    String day =
+                        DateTime.parse(streamSnapshot.data!.docs[index]['date'])
+                            .day
+                            .toString();
+                    String month =
+                        DateTime.parse(streamSnapshot.data!.docs[index]['date'])
+                            .month
+                            .toString();
+                    String year =
+                        DateTime.parse(streamSnapshot.data!.docs[index]['date'])
+                            .year
+                            .toString();
+                    String id =
+                        streamSnapshot.data!.docs[index]['id'].toString();
+                    String date = streamSnapshot.data!.docs[index]['date'];
+                    String taskname = streamSnapshot.data!.docs[index]['task'];
+                    String description =
+                        streamSnapshot.data!.docs[index]['descrtiption'];
+                    return Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        elevation: 10.0,
+                        child: ListTile(
+                          title: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(
+                                height: 10,
+                              ),
+                              Text(streamSnapshot.data!.docs[index]['task'],
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20.0,
+                                  )),
+                            ],
                           ),
-                          elevation: 10.0,
-                          child: ListTile(
-                            title: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(
-                                  height: 10,
-                                ),
-                                Text(streamSnapshot.data!.docs[index]['task'],
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 20.0,
-                                    )),
-                              ],
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(
-                                  height: 3,
-                                ),
-                                Text("$year.$month.$day"),
-                                const SizedBox(
-                                  height: 5,
-                                ),
-                                Text(
-                                  streamSnapshot.data!.docs[index]
-                                      ['descrtiption'],
-                                  style: const TextStyle(color: Colors.white54),
-                                )
-                              ],
-                            ),
-                            leading: Checkbox(
-                              checkColor: Colors.white,
-                              fillColor:
-                                  MaterialStateProperty.resolveWith(getColor),
-                              value: _isChecked[index],
-                              onChanged: ((value) => {
-                                    setState(
-                                      () {
-                                        _isChecked[index] = value!;
-                                        _saveFirestoreData(
-                                            id, date, taskname, description);
-                                      },
-                                    )
-                                  }),
-                            ),
-                          ));
-                    });
-              } else {
-                return (const Center(child: Text("Create Your First Task")));
-              }
-          }
-        },
-      );
-    } else {
-      return (const Center(child: Text("No Taks Found")));
-    }
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(
+                                height: 3,
+                              ),
+                              Text("$year.$month.$day"),
+                              const SizedBox(
+                                height: 5,
+                              ),
+                              Text(
+                                streamSnapshot.data!.docs[index]
+                                    ['descrtiption'],
+                                style: const TextStyle(color: Colors.white54),
+                              )
+                            ],
+                          ),
+                          leading: Checkbox(
+                            checkColor: Colors.white,
+                            fillColor:
+                                MaterialStateProperty.resolveWith(getColor),
+                            value: _isChecked[index],
+                            onChanged: ((value) => {
+                                  setState(
+                                    () {
+                                      _isChecked[index] = value!;
+                                      _saveFirestoreData(
+                                          id, date, taskname, description);
+                                    },
+                                  )
+                                }),
+                          ),
+                        ));
+                  });
+            } else {
+              return (const Center(child: Text("Create Your First Task")));
+            }
+        }
+      },
+    );
   }
 
   @override
@@ -246,12 +209,9 @@ class _TodoListState extends State<TodoList> {
         ],
         title: const Text("MY tODO"),
       ),
-      body: RefreshIndicator(
-        onRefresh: () => _referesh(),
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: taskList(),
-        ),
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: taskList(),
       ),
       floatingActionButton: FloatingActionButton(
           onPressed: () {},
@@ -274,7 +234,7 @@ class _TodoListState extends State<TodoList> {
                           child: Padding(
                             padding: const EdgeInsets.fromLTRB(
                                 20.0, 20.0, 20.0, 10.0),
-                            child: AddTask(userId),
+                            child: AddTask(widget.userId),
                           )),
                     );
                   });

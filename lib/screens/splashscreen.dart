@@ -15,12 +15,13 @@ class _SplashScreenState extends State<SplashScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
     bool res = prefs.getBool("username") ?? false;
+    String userId = prefs.getString("userId") ?? "";
 
     Future.delayed(const Duration(seconds: 2), () {
       if (res) {
         Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (context) => const Home()),
+            MaterialPageRoute(builder: (context) => Home(userId)),
             ModalRoute.withName("/Home"));
       } else {
         Navigator.pushAndRemoveUntil(
